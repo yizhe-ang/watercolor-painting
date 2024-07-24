@@ -4,34 +4,24 @@ import { forwardRef, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { noiseFn } from "../lib/glsl";
 
-const MixTexture = forwardRef(function MixTexture(
-  { vertexShader = vert, fragmentShader = frag, renderTarget, uniforms },
-  ref
-) {
-  const scene = useMemo(() => new THREE.Scene(), []);
-  const camera = useMemo(
-    () => new THREE.OrthographicCamera(-1, 1, 1, -1, 1 / Math.pow(2, 53), 1),
-    []
-  );
+const MixBuffer = forwardRef(function MixBuffer({ scene, uniforms }, ref) {
+  // const camera = useMemo(
+  //   () => new THREE.OrthographicCamera(-1, 1, 1, -1, 1 / Math.pow(2, 53), 1),
+  //   []
+  // );
 
-  // let targetA = renderTarget;
-  let targetA = useFBO();
-  let targetB = useFBO();
+  // useFrame(({ gl }) => {
+  //   gl.setRenderTarget(targetA);
+  //   gl.render(scene, camera);
 
-  useFrame(({ gl }) => {
-    gl.setRenderTarget(targetA);
-    gl.render(scene, camera);
+  //   let temp = targetA;
+  //   targetA = targetB;
+  //   targetB = temp;
 
-    // FIXME: Have to update uPrev you fool
+  //   ref.current = temp;
 
-    let temp = targetA;
-    targetA = targetB;
-    targetB = temp;
-
-    ref.current = temp
-
-    gl.setRenderTarget(null);
-  });
+  //   gl.setRenderTarget(null);
+  // });
 
   return (
     <>
@@ -42,8 +32,8 @@ const MixTexture = forwardRef(function MixTexture(
             <shaderMaterial
               // ref={ref}
               uniforms={uniforms}
-              vertexShader={vertexShader}
-              fragmentShader={fragmentShader}
+              vertexShader={vert}
+              fragmentShader={frag}
             />
           </mesh>
         </>,
@@ -82,10 +72,10 @@ void main() {
 
   // vec4 color = texture(uPrev, vUv + force);
 
-  vec4 color = texture(uPrev, vUv);
+  vec4 color = texture(uPrev, vUv) * 0.5;
 
-  gl_FragColor = color *= 0.5;
+  gl_FragColor = color;
 }
 `;
 
-export default MixTexture;
+export default MixBuffer;

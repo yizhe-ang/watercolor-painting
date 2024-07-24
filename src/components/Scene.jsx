@@ -14,6 +14,7 @@ import { easing } from "maath";
 import EffectMaterial from "../lib/EffectMaterial";
 import PaintingMaterial from "./PaintingMaterial";
 import MixTexture from "./MixTexture";
+import MixBuffer from "./MixBuffer";
 
 extend({ EffectMaterial });
 
@@ -44,39 +45,48 @@ const Scene = ({ img, depth }) => {
   const planeWidth = normalizedWidth * 5;
   const planeHeight = normalizedHeight * 5;
 
-  // For ping-pong
-  const fboScene = useMemo(() => new THREE.Scene(), []);
   const fboCamera = useMemo(
     () => new THREE.OrthographicCamera(-1, 1, 1, -1, 1 / Math.pow(2, 53), 1),
     []
   );
-  let targetA = useFBO();
-  let targetB = useFBO();
 
-  const mixRenderTarget = useFBO();
+  // Watercolor effect feedback shader setup
+  const watercolorScene = useMemo(() => new THREE.Scene(), []);
+  let watercolorTargetA = useFBO();
+  let watercolorTargetB = useFBO();
+
+  // Mix effect feedback shader setup
+  const mixScene = useMemo(() => new THREE.Scene(), []);
+  let mixTargetA = useFBO();
+  let mixTargetB = useFBO();
 
   useFrame(({ clock, gl }) => {
-    // Render FBO
-    gl.setRenderTarget(targetA);
-    gl.render(fboScene, fboCamera);
+    // Watercolor effect feedback setup
+    gl.setRenderTarget(watercolorTargetA);
+    gl.render(watercolorScene, fboCamera);
 
     effectMaterialRef.current.uBrush = brushTextureRef.current;
-    effectMaterialRef.current.uPrev = targetA.texture;
+    effectMaterialRef.current.uPrev = watercolorTargetA.texture;
     effectMaterialRef.current.uTime = clock.elapsedTime;
 
+    let watercolorTemp = watercolorTargetA;
+    watercolorTargetA = watercolorTargetB;
+    watercolorTargetB = watercolorTemp;
+
+    // Mix effect feedback setup
+    gl.setRenderTarget(mixTargetA);
+    gl.render(mixScene, fboCamera);
+
+    let mixTemp = mixTargetA;
+    mixTargetA = mixTargetB;
+    mixTargetB = mixTemp;
+
     // debugRef.current.map = brushTextureRef.current;
-    // debugRef.current.map = targetA.texture;
-    // debugRef.current.map = mixRenderTarget.texture;
-    // debugRef.current.map = mixMaterialRef.current.uniforms.uPrev.value;
-    debugRef.current.map = mixMaterialRef.current.texture;
+    debugRef.current.map = watercolorTargetA.texture;
+    // debugRef.current.map = mixTargetA.texture;
     // debugRef.current.map = displacementMap;
 
     gl.setRenderTarget(null);
-
-    // Ping-pong swap
-    let temp = targetA;
-    targetA = targetB;
-    targetB = temp;
   });
 
   return (
@@ -108,7 +118,7 @@ const Scene = ({ img, depth }) => {
               value: 0,
             },
             uBrush: {
-              value: targetA.texture,
+              value: watercolorTargetA.texture,
             },
             uMouse: {
               value: new THREE.Vector2(),
@@ -175,13 +185,20 @@ const Scene = ({ img, depth }) => {
             </effectMaterial>
           </mesh>
         </>,
-        fboScene
+        watercolorScene
       )}
 
       {/* Mixing Texture */}
-      <MixTexture
+      {/* <MixTexture
         ref={mixMaterialRef}
         renderTarget={mixRenderTarget}
+        uniforms={{
+          uPrev: new THREE.Uniform(map),
+          uMouse: new THREE.Uniform(new THREE.Vector2()),
+        }}
+      /> */}
+      <MixBuffer
+        scene={mixScene}
         uniforms={{
           uPrev: new THREE.Uniform(map),
           uMouse: new THREE.Uniform(new THREE.Vector2()),
