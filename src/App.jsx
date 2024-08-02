@@ -2,11 +2,16 @@ import { Canvas } from "@react-three/fiber";
 import "./App.css";
 import Scene from "./components/Scene";
 import useDepthEstimator from "./lib/useDepthEstimator";
+import { useControls } from "leva";
 
 // FIXME: Image resolution is also a performance bottleneck
-const img = import.meta.env.BASE_URL + "/watercolor_1.jpeg";
+const imgUrl = import.meta.env.BASE_URL + "/watercolor_1.jpeg";
 
 function App() {
+  const { Image: img } = useControls({
+    Image: { image: imgUrl },
+  });
+
   // Perform depth estimation
   const output = useDepthEstimator(img);
 

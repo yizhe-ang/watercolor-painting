@@ -36,6 +36,9 @@ const useDepthEstimator = (imgUrl) => {
     }
 
     if (model) {
+      // reset
+      setOutput(null);
+
       predict();
     }
   }, [model, imgUrl]);
