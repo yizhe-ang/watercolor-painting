@@ -4462,7 +4462,7 @@ void main() {
 
     gl_Position = projectedPosition + offset;
 
-    gl_PointSize = aPointSize * 160.0 * (1.0 / -viewPosition.z);
+    gl_PointSize = aPointSize * 200.0 * (1.0 / -viewPosition.z);
 
     vUv = uv;
     vScaleX = aScaleX;
