@@ -119,7 +119,7 @@ const Scene = ({ img, depth }) => {
 
   return (
     <>
-      {/* <CameraRig /> */}
+      <CameraRig />
       <OrbitControls />
 
       {/* Lighting */}
@@ -281,7 +281,7 @@ function CameraRig() {
       [
         -1 + (state.pointer.x * state.viewport.width) / 3,
         (1 + state.pointer.y) / 2,
-        3.5,
+        4.5,
       ],
       0.5,
       delta

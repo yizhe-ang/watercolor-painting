@@ -30,8 +30,6 @@ const CursorLine = ({
 
   const brushMap = useTexture("/stroke.png");
 
-  console.log(brushMap);
-
   // const sprungX = useSpring(cursorPositionX, { stiffness, damping });
   // const sprungY = useSpring(cursorPositionY, { stiffness, damping });
 
