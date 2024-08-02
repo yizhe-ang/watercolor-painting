@@ -1,7 +1,7 @@
 import { forwardRef, useEffect, useMemo, useRef, useState } from "react";
 import CustomShaderMaterial from "three-custom-shader-material";
 import * as THREE from "three";
-import { createPortal, extend, useFrame } from "@react-three/fiber";
+import { createPortal, extend, useFrame, useThree } from "@react-three/fiber";
 import {
   Hud,
   OrbitControls,
@@ -14,16 +14,51 @@ import { easing } from "maath";
 import EffectMaterial from "../lib/EffectMaterial";
 import PaintingMaterial from "./PaintingMaterial";
 import MixTexture from "./MixTexture";
+import { MeshLineGeometry, MeshLineMaterial } from "meshline";
+import CursorLine from "./CursorLine";
+import { useMotionValue } from "framer-motion";
+import BrushParticles from "./BrushParticles";
 
-extend({ EffectMaterial });
+extend({ EffectMaterial, MeshLineGeometry, MeshLineMaterial });
 
 const Scene = ({ img, depth }) => {
+  const { pointer, viewport } = useThree();
+
+  const [showWatercolorCanvas, setShowWatercolorCanvas] = useState(false);
+
+  const cursorPositionX = useMotionValue(0);
+  const cursorPositionY = useMotionValue(0);
+
+  // useEffect(() => {
+  //   const timeout = setTimeout(() => {
+  //     setShowWatercolorCanvas(true);
+  //   }, 3000);
+
+  //   return () => clearTimeout(timeout);
+  // }, []);
+
+  useEffect(() => {
+    function handleMousemove() {
+      const { width, height } = viewport.getCurrentViewport();
+      cursorPositionX.set((pointer.x * width) / 2);
+      cursorPositionY.set((pointer.y * height) / 2);
+    }
+
+    window.addEventListener("mousemove", handleMousemove);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMousemove);
+    };
+  }, [pointer, viewport, cursorPositionX, cursorPositionY]);
+
   const materialRef = useRef();
   const debugRef = useRef();
   const brushRef = useRef();
   const brushTextureRef = useRef();
   const effectMaterialRef = useRef();
   const mixMaterialRef = useRef();
+
+  const brushMap = useTexture("/brush-texture.png");
 
   // Load depth map
   const displacementMap = useMemo(() => {
@@ -55,21 +90,24 @@ const Scene = ({ img, depth }) => {
 
   const mixRenderTarget = useFBO();
 
-  useFrame(({ clock, gl }) => {
+  useFrame(({ clock, gl }, delta) => {
     // Render FBO
     gl.setRenderTarget(targetA);
     gl.render(fboScene, fboCamera);
 
     effectMaterialRef.current.uBrush = brushTextureRef.current;
     effectMaterialRef.current.uPrev = targetA.texture;
-    effectMaterialRef.current.uTime = clock.elapsedTime;
+    // effectMaterialRef.current.uTime = clock.elapsedTime;
+    effectMaterialRef.current.uTime += delta
 
     // debugRef.current.map = brushTextureRef.current;
     // debugRef.current.map = targetA.texture;
     // debugRef.current.map = mixRenderTarget.texture;
     // debugRef.current.map = mixMaterialRef.current.uniforms.uPrev.value;
-    debugRef.current.map = mixMaterialRef.current.texture;
+    // debugRef.current.map = mixMaterialRef.current.texture;
     // debugRef.current.map = displacementMap;
+
+    // materialRef.current.map = mixMaterialRef.current.uniforms.uPrev.value;
 
     gl.setRenderTarget(null);
 
@@ -88,40 +126,54 @@ const Scene = ({ img, depth }) => {
       <ambientLight args={[0xffffff, 3]} />
 
       {/* Debug HUD */}
-      <HudPlane ref={debugRef}></HudPlane>
+      {/* <HudPlane ref={debugRef}></HudPlane> */}
+
+      {/* Brush Particles */}
+      <BrushParticles
+        planeWidth={planeWidth}
+        planeHeight={planeHeight}
+        texture={map}
+      />
 
       {/* Painting Canvas */}
-      <mesh>
-        <planeGeometry
-          args={[
-            planeWidth,
-            planeHeight,
-            // FIXME: Affects performance
-            Math.floor(width / 4),
-            Math.floor(height / 4),
-          ]}
-        />
-        <PaintingMaterial
-          ref={materialRef}
-          uniforms={{
-            uTime: {
-              value: 0,
-            },
-            uBrush: {
-              value: targetA.texture,
-            },
-            uMouse: {
-              value: new THREE.Vector2(),
-            },
-          }}
-          map={map}
-          // FIXME: How to load in displacement map smoothly?
-          displacementMap={displacementMap}
-        ></PaintingMaterial>
-      </mesh>
+      {/* {showWatercolorCanvas && ( */}
+        <mesh>
+          <planeGeometry
+            args={[
+              planeWidth,
+              planeHeight,
+              // FIXME: Affects performance
+              64,
+              64,
+              // Math.floor(width / 4),
+              // Math.floor(height / 4),
+            ]}
+          />
+          <PaintingMaterial
+            ref={materialRef}
+            uniforms={{
+              uTime: {
+                value: 0,
+              },
+              uBrush: {
+                value: targetA.texture,
+              },
+              uMouse: {
+                value: new THREE.Vector2(),
+              },
+            }}
+            map={map}
+            // map={brushMap}
+            // FIXME: How to load in displacement map smoothly?
+            displacementMap={displacementMap}
+          ></PaintingMaterial>
+        </mesh>
+      {/* )} */}
 
       {/* Flat dummy plane to capture mouse */}
+      {/* FIXME: Is this causing lag? */}
       <mesh
+        position-z={0.1}
         onPointerMove={(e) => {
           // Move the brush along with the mouse
           if (brushRef.current) {
@@ -179,14 +231,25 @@ const Scene = ({ img, depth }) => {
       )}
 
       {/* Mixing Texture */}
-      <MixTexture
+      {/* <MixTexture
         ref={mixMaterialRef}
         renderTarget={mixRenderTarget}
         uniforms={{
           uPrev: new THREE.Uniform(map),
           uMouse: new THREE.Uniform(new THREE.Vector2()),
         }}
-      />
+      /> */}
+
+      {/* Cursor effects */}
+      {/* <CursorLine
+        cursorPositionX={cursorPositionX}
+        cursorPositionY={cursorPositionY}
+        color={"black"}
+        // width={0.05}
+        width={0.1}
+        // stiffness={0.02}
+        // damping={0.25}
+      /> */}
     </>
   );
 };
@@ -218,7 +281,7 @@ function CameraRig() {
       [
         -1 + (state.pointer.x * state.viewport.width) / 3,
         (1 + state.pointer.y) / 2,
-        5.5,
+        3.5,
       ],
       0.5,
       delta

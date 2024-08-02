@@ -103,10 +103,15 @@ const EffectMaterial = shaderMaterial(
       vec2 aspect = vec2(1.0, uResolution.y / uResolution.x);
 
       // Increase flood after a set time
-      float floodStart = 0.01;
-      float floodEnd = 0.03;
+      // float floodStart = 0.01;
+      // float floodEnd = 0.03;
+      // float floodEnd = 0.015;
+      // float floodMix = smoothstep(3.0, 4.0, uTime);
 
-      float floodMix = smoothstep(3.0, 4.0, uTime);
+      float floodStart = 0.00;
+      float floodEnd = 0.025;
+      float floodMix = smoothstep(2.5, 4.0, uTime);
+
       float flood = mix(floodStart, floodEnd, floodMix);
 
       vec2 disp = fbm(vUv * 22.0, 4) * aspect * flood;
@@ -136,9 +141,12 @@ const EffectMaterial = shaderMaterial(
 
       // More fading out
       float fade2 = 0.001;
-      gl_FragColor = vec4(
+
+      vec4 final = vec4(
         min(vec3(1.0), finalColor * (1.0 + 0.01) + fade2), 1.0
       );
+
+      gl_FragColor = final;
     }
   `
 );

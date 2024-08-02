@@ -8,13 +8,16 @@ const img = "watercolor_1.jpeg";
 
 function App() {
   // Perform depth estimation
-  // const output = useDepthEstimator(img);
+  const output = useDepthEstimator(img);
 
   return (
     <div className="fixed inset-0">
+      {!output && (
+        <div className="absolute inset-0 bg-stone-500 animate-pulse" />
+      )}
       <Canvas>
-        {/* <Scene img={img} depth={output} /> */}
-        <Scene img={img} />
+        {output && <Scene img={img} depth={output} />}
+        {/* <Scene img={img} /> */}
       </Canvas>
     </div>
   );

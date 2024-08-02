@@ -1,11 +1,16 @@
 import { forwardRef } from "react";
 import CustomShaderMaterial from "three-custom-shader-material";
 import * as THREE from "three";
+import { useFrame } from "@react-three/fiber";
 
 const PaintingMaterial = forwardRef(function PaintingMaterial(
   { uniforms, map, displacementScale = 2, displacementMap },
   ref
 ) {
+  useFrame(({ clock }) => {
+    ref.current.uniforms.uTime.value = clock.getElapsedTime();
+  });
+
   return (
     <CustomShaderMaterial
       ref={ref}
@@ -30,6 +35,7 @@ const PaintingMaterial = forwardRef(function PaintingMaterial(
         /* glsl */ `
         uniform sampler2D uBrush;
         uniform vec2 uMouse;
+        uniform float uTime;
 
         varying vec2 vUv;
 
@@ -38,11 +44,11 @@ const PaintingMaterial = forwardRef(function PaintingMaterial(
           float alpha = 1.0 - brush;
 
           // Perform color mixing on mouse position
-
           // float distToMouse = distance(uMouse, vUv);
           // csm_DiffuseColor.a = distToMouse;
 
-          // csm_DiffuseColor.a = alpha;
+          // csm_DiffuseColor.a = step(startTime, uTime) * alpha;
+          csm_DiffuseColor.a = alpha;
         }
       `
       }
