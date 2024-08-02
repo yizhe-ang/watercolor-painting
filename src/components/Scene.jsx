@@ -58,7 +58,7 @@ const Scene = ({ img, depth }) => {
   const effectMaterialRef = useRef();
   const mixMaterialRef = useRef();
 
-  const brushMap = useTexture("/brush-texture.png");
+  // const brushMap = useTexture("/brush-texture.png");
 
   // Load depth map
   const displacementMap = useMemo(() => {
@@ -98,7 +98,7 @@ const Scene = ({ img, depth }) => {
     effectMaterialRef.current.uBrush = brushTextureRef.current;
     effectMaterialRef.current.uPrev = targetA.texture;
     // effectMaterialRef.current.uTime = clock.elapsedTime;
-    effectMaterialRef.current.uTime += delta
+    effectMaterialRef.current.uTime += delta;
 
     // debugRef.current.map = brushTextureRef.current;
     // debugRef.current.map = targetA.texture;
@@ -137,37 +137,37 @@ const Scene = ({ img, depth }) => {
 
       {/* Painting Canvas */}
       {/* {showWatercolorCanvas && ( */}
-        <mesh>
-          <planeGeometry
-            args={[
-              planeWidth,
-              planeHeight,
-              // FIXME: Affects performance
-              64,
-              64,
-              // Math.floor(width / 4),
-              // Math.floor(height / 4),
-            ]}
-          />
-          <PaintingMaterial
-            ref={materialRef}
-            uniforms={{
-              uTime: {
-                value: 0,
-              },
-              uBrush: {
-                value: targetA.texture,
-              },
-              uMouse: {
-                value: new THREE.Vector2(),
-              },
-            }}
-            map={map}
-            // map={brushMap}
-            // FIXME: How to load in displacement map smoothly?
-            displacementMap={displacementMap}
-          ></PaintingMaterial>
-        </mesh>
+      <mesh>
+        <planeGeometry
+          args={[
+            planeWidth,
+            planeHeight,
+            // FIXME: Affects performance
+            64,
+            64,
+            // Math.floor(width / 4),
+            // Math.floor(height / 4),
+          ]}
+        />
+        <PaintingMaterial
+          ref={materialRef}
+          uniforms={{
+            uTime: {
+              value: 0,
+            },
+            uBrush: {
+              value: targetA.texture,
+            },
+            uMouse: {
+              value: new THREE.Vector2(),
+            },
+          }}
+          map={map}
+          // map={brushMap}
+          // FIXME: How to load in displacement map smoothly?
+          displacementMap={displacementMap}
+        ></PaintingMaterial>
+      </mesh>
       {/* )} */}
 
       {/* Flat dummy plane to capture mouse */}
