@@ -113,7 +113,7 @@ extend({ BrushParticleMaterial });
 const BrushParticles = ({ planeWidth, planeHeight, texture, size = 96 }) => {
   const materialRef = useRef();
 
-  const brushTexture = useTexture("/brush-texture.png");
+  const brushTexture = useTexture(import.meta.env.BASE_URL + "/brush-texture.png");
 
   useFrame(({ clock }, delta) => {
     // materialRef.current.uTime = clock.getElapsedTime();
