@@ -17,6 +17,7 @@
     "@react-three/fiber": "^8.16.8",
     "@xenova/transformers": "^2.17.2",
     "framer-motion": "^11.3.18",
+    "leva": "^0.9.35",
     "maath": "^0.10.8",
     "meshline": "^3.3.1",
     "react": "^18.2.0",
